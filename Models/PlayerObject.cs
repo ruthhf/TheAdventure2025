@@ -117,7 +117,7 @@ public class PlayerObject : RenderableGameObject
         else
         {
             newState = PlayerState.Move;
-            
+
             if (y < Position.Y && newDirection != PlayerStateDirection.Up)
             {
                 newDirection = PlayerStateDirection.Up;
@@ -146,4 +146,12 @@ public class PlayerObject : RenderableGameObject
 
         Position = (x, y);
     }
+    public void ResetPosition()
+{
+    // Bypass the GameOver guard by manually setting the state
+    State = (PlayerState.Idle, PlayerStateDirection.Down);
+    Position = (100, 100);
+    SetState(PlayerState.Idle, PlayerStateDirection.Down);
+}
+
 }

@@ -117,7 +117,7 @@ public class PlayerObject : RenderableGameObject
         else
         {
             newState = PlayerState.Move;
-            
+
             if (y < Position.Y && newDirection != PlayerStateDirection.Up)
             {
                 newDirection = PlayerStateDirection.Up;
@@ -145,5 +145,11 @@ public class PlayerObject : RenderableGameObject
         }
 
         Position = (x, y);
+    }
+        public void ResetPosition()
+    {
+        State = (PlayerState.Idle, PlayerStateDirection.Right);
+        Position = (100, 100);
+        SetState(PlayerState.Idle, PlayerStateDirection.Right);
     }
 }

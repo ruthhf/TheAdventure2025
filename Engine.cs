@@ -8,7 +8,8 @@ using TheAdventure.Scripting;
 namespace TheAdventure;
 
 public class Engine
-{
+{   private GameState _gameState = GameState.Playing;
+    private int lives = 3;
     private readonly GameRenderer _renderer;
     private readonly Input _input;
     private readonly ScriptEngine _scriptEngine = new();
@@ -83,6 +84,14 @@ public class Engine
         var msSinceLastFrame = (currentTime - _lastUpdate).TotalMilliseconds;
         _lastUpdate = currentTime;
 
+if (_gameState == GameState.GameOver)
+        {
+            if (_input.IsKeyRPressed())
+            {
+                RestartGame();
+            }
+            return; // Skip normal updates when game over
+        }
         if (_player == null)
         {
             return;
@@ -100,7 +109,7 @@ public class Engine
         {
             _player.Attack();
         }
-        
+
         _scriptEngine.ExecuteAll(this);
 
         if (addBomb)
@@ -113,16 +122,23 @@ public class Engine
     {
         _renderer.SetDrawColor(0, 0, 0, 255);
         _renderer.ClearScreen();
+        if (_gameState == GameState.Playing)
+        {
+            var playerPosition = _player!.Position;
+            _renderer.CameraLookAt(playerPosition.X, playerPosition.Y);
 
-        var playerPosition = _player!.Position;
-        _renderer.CameraLookAt(playerPosition.X, playerPosition.Y);
+            RenderTerrain();
+            RenderAllObjects();
 
-        RenderTerrain();
-        RenderAllObjects();
-
+            _renderer.LoadHeartTexture();
+            _renderer.DrawHearts(lives); // draw hearts after everything else
+        }
+        else if (_gameState == GameState.GameOver)
+        {
+            _renderer.DrawGameOverScreen();
+        }
         _renderer.PresentFrame();
     }
-
     public void RenderAllObjects()
     {
         var toRemove = new List<int>();
@@ -149,12 +165,19 @@ public class Engine
             var deltaY = Math.Abs(_player.Position.Y - tempGameObject.Position.Y);
             if (deltaX < 32 && deltaY < 32)
             {
-                _player.GameOver();
+                // Reduce lives instead of game over directly
+                lives--;
+                if (lives <= 0)
+                {
+                    _player.GameOver();
+                    _gameState = GameState.GameOver;
+                }
             }
         }
 
         _player?.Render(_renderer);
     }
+
 
     public void RenderTerrain()
     {
@@ -215,4 +238,26 @@ public class Engine
         TemporaryGameObject bomb = new(spriteSheet, 2.1, (worldCoords.X, worldCoords.Y));
         _gameObjects.Add(bomb.Id, bomb);
     }
+
+    public int GetLives() => lives;
+      private void RestartGame()
+    {
+        lives = 3;
+        _gameState = GameState.Playing;
+
+        if (_player != null)
+        {
+            _player.ResetPosition();
+        }
+
+        _gameObjects.Clear();
+    }
+
+    public enum GameState
+{
+    Playing,
+    GameOver
+}
+    
+    
 }
